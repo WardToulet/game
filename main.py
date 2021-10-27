@@ -3,6 +3,9 @@ from pygame.locals import *
 
 pygame.init()
 
+clock = pygame.time.Clock()
+fps = 60
+
 screen_width = 1000
 screen_height = 1000
 tile_size = 50
@@ -49,19 +52,34 @@ class World:
 
 class Player:
     def __init__(self, x, y):
-        img = pygame.image.load('img/guy1.png')
-        self.img = pygame.transform.scale(img, (40, 80))
-        self.rect = self.img.get_rect()
+        self.images_right = []
+        self.images_left = []
+        self.index = 0
+        self.counter = 0
+
+        for num in range(1, 5):
+            img_right = pygame.image.load(f'img/guy{num}.png')
+            img_right = pygame.transform.scale(img_right, (40, 80))
+            img_left = pygame.transform.flip(img_right, True, False) 
+            self.images_right.append(img_right)
+            self.images_left.append(img_left)
+
+        self.image = self.images_right[self.index] 
+
+        self.rect = self.image.get_rect()
+
         self.rect.x = x
         self.rect.y = y
         self.vel_y = 0
         self.jumped = False
+        self.direction = 0
 
     def update(self):
         dx = 0
         dy = 0
+        walk_cooldown = 5
 
-        # handle input
+        # input
         key = pygame.key.get_pressed()
         if key[pygame.K_SPACE] and not self.jumped:
             self.vel_y = -15
@@ -70,8 +88,33 @@ class Player:
             self.jumped = False
         if key[pygame.K_LEFT]:
             dx -= 5
+            self.counter += 1
+            self.direction = -1
         if key[pygame.K_RIGHT]:
             dx += 5
+            self.counter += 1
+            self.direction = 1
+        if not key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
+            self.counter = 0
+            self.index = 0
+            self.image = self.images_right[self.index]
+            if self.direction == 1:
+                self.image = self.images_right[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
+
+        # animation
+        if self.counter > walk_cooldown:
+            self.counter = 0
+            self.index += 1
+            if self.index >= len(self.images_right):
+                self.index = 0
+
+            if self.direction == 1:
+                self.image = self.images_right[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
+
 
         # gravity
         self.vel_y += 1
@@ -93,7 +136,7 @@ class Player:
             dy = 0
 
     def draw(self):
-        screen.blit(self.img, self.rect)
+        screen.blit(self.image, self.rect)
 
 
 world_data = [
@@ -124,6 +167,8 @@ world = World(world_data)
 
 run = True
 while run:
+    clock.tick(fps)
+
     screen.blit(img_bkg, (0, 0))
     screen.blit(img_sun, (100, 100))
 
