@@ -3,7 +3,9 @@ from pygame.locals import *
 
 class Player:
     def __init__(self, x, y):
+        self.reset(x, y)
 
+    def reset(self, x, y):
         self.images_right = list(map(lambda i: pygame.transform.scale(pygame.image.load(f'img/guy{i}.png'), (40, 80)), range(1, 5)))
         self.images_left = list(map(lambda r: pygame.transform.flip(r, True, False), self.images_right))
         self.death_image = pygame.image.load('img/ghost.png')
@@ -22,90 +24,89 @@ class Player:
         self.vel_y = 0
         self.jumped = False
         self.direction = 0
+        self.in_air = False
 
-    def update(self, tile_list, entity_list, game_over):
+    def update(self, tile_list, entity_list):
         dx = 0
         dy = 0
         walk_cooldown = 5
 
-        if game_over == 0:
-            # input
-            key = pygame.key.get_pressed()
-            if key[pygame.K_SPACE] and not self.jumped:
-                self.vel_y = -15
-                self.jumped = True
-            if not key[pygame.K_SPACE]:
-                self.jumped = False
-            if key[pygame.K_LEFT]:
-                dx -= 5
-                self.counter += 1
-                self.direction = -1
-            if key[pygame.K_RIGHT]:
-                dx += 5
-                self.counter += 1
-                self.direction = 1
-            if not key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
-                self.counter = 0
-                self.index = 0
+        # input
+        key = pygame.key.get_pressed()
+        if key[pygame.K_SPACE] and not self.jumped and not self.in_air:
+            self.vel_y = -15
+            self.jumped = True
+        if not key[pygame.K_SPACE]:
+            self.jumped = False
+        if key[pygame.K_LEFT]:
+            dx -= 5
+            self.counter += 1
+            self.direction = -1
+        if key[pygame.K_RIGHT]:
+            dx += 5
+            self.counter += 1
+            self.direction = 1
+        if not key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
+            self.counter = 0
+            self.index = 0
+            self.image = self.images_right[self.index]
+            if self.direction == 1:
                 self.image = self.images_right[self.index]
-                if self.direction == 1:
-                    self.image = self.images_right[self.index]
-                if self.direction == -1:
-                    self.image = self.images_left[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
 
-            # animation
-            if self.counter > walk_cooldown:
-                self.counter = 0
-                self.index += 1
-                if self.index >= len(self.images_right):
-                    self.index = 0
+        # animation
+        if self.counter > walk_cooldown:
+            self.counter = 0
+            self.index += 1
+            if self.index >= len(self.images_right):
+                self.index = 0
 
-                if self.direction == 1:
-                    self.image = self.images_right[self.index]
-                if self.direction == -1:
-                    self.image = self.images_left[self.index]
+            if self.direction == 1:
+                self.image = self.images_right[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
 
 
-            # gravity
-            self.vel_y += 1
-            if self.vel_y > 10:
-                self.vel_y = 10
+        # gravity
+        self.vel_y += 1
+        if self.vel_y > 10:
+            self.vel_y = 10
 
-            # Apply velocity
-            dy += self.vel_y
+        # Apply velocity
+        dy += self.vel_y
 
-            # collsision
-            for tile in tile_list:
-                x_rect = self.rect.move(dx, 0)
-                if tile[1].colliderect(x_rect):
-                    dx = 0
+        # collsision
+        self.in_air = True
+        for tile in tile_list:
+            x_rect = self.rect.move(dx, 0)
+            if tile[1].colliderect(x_rect):
+                dx = 0
 
-                y_rect = self.rect.move(0, dy)
-                if tile[1].colliderect(y_rect):
-                    if self.vel_y < 0:
-                        dy = tile[1].bottom - self.rect.top
-                    if self.vel_y >= 0:
-                        dy = tile[1].top - self.rect.bottom
+            y_rect = self.rect.move(0, dy)
+            if tile[1].colliderect(y_rect):
+                if self.vel_y < 0:
+                    dy = tile[1].bottom - self.rect.top
+                if self.vel_y >= 0:
+                    dy = tile[1].top - self.rect.bottom
+                    self.in_air = False
                     self.vel_y = 0
 
-            # enemy collision
-            if pygame.sprite.spritecollide(self, entity_list, False):
-                game_over = -1
+        # enemy collision if collided with an enmy return false
+        if pygame.sprite.spritecollide(self, entity_list, False):
+            return False
 
-            # update
-            self.rect.x += dx
-            self.rect.y += dy
-        elif game_over == -1:
-            if self.rect.y > 200:
-                self.rect.y -= 5
-        return game_over
+        # update
+        self.rect.x += dx
+        self.rect.y += dy
 
-    def draw(self, screen, game_over):
-        if game_over == 0:
-            screen.blit(self.image, self.rect)
-        else:
-            screen.blit(self.death_image, self.rect)
+        return True
 
+    def update_death(self):
+        self.image = self.death_image
+        if self.rect.y > 200:
+            self.rect.y -= 5
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
         pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
-
-

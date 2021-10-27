@@ -42,5 +42,3 @@ class World:
         image = pygame.transform.scale(self.images[kind - 1], (tile_size, tile_size))
         rect = image.get_rect().move(x * tile_size, y * tile_size)
         self.tile_list.append((image, rect))
-
-
