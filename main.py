@@ -14,11 +14,6 @@ pygame.display.set_caption('Platformer')
 img_sun = pygame.image.load('img/sun.png')
 img_bkg = pygame.image.load('img/sky.png')
 
-def draw_grid():
-    for line in range(0, 20):
-        pygame.draw.line(screen, (255, 255, 255), (0, line * tile_size), (screen_width, line * tile_size))
-        pygame.draw.line(screen, (255, 255, 255), (line * tile_size, 0), (line * tile_size, screen_height))
-
 class World:
     def __init__(self, data):
         self.tile_list = []
@@ -52,6 +47,55 @@ class World:
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
 
+class Player:
+    def __init__(self, x, y):
+        img = pygame.image.load('img/guy1.png')
+        self.img = pygame.transform.scale(img, (40, 80))
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.vel_y = 0
+        self.jumped = False
+
+    def update(self):
+        dx = 0
+        dy = 0
+
+        # handle input
+        key = pygame.key.get_pressed()
+        if key[pygame.K_SPACE] and not self.jumped:
+            self.vel_y = -15
+            self.jumped = True
+        if not key[pygame.K_SPACE]:
+            self.jumped = False
+        if key[pygame.K_LEFT]:
+            dx -= 5
+        if key[pygame.K_RIGHT]:
+            dx += 5
+
+        # gravity
+        self.vel_y += 1
+        if self.vel_y > 10:
+            self.vel_y = 10
+
+        # Apply velocity
+        dy += self.vel_y
+
+        # collsision
+        # TODO: collision
+
+        # update
+        self.rect.x += dx
+        self.rect.y += dy
+
+        if self.rect.bottom > screen_height:
+            self.rect.bottom = screen_height
+            dy = 0
+
+    def draw(self):
+        screen.blit(self.img, self.rect)
+
+
 world_data = [
 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
@@ -75,6 +119,7 @@ world_data = [
 [1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ]
 
+player = Player(100, screen_height - 130)
 world = World(world_data)
 
 run = True
@@ -83,7 +128,8 @@ while run:
     screen.blit(img_sun, (100, 100))
 
     world.draw()
-    draw_grid()
+    player.update()
+    player.draw()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
