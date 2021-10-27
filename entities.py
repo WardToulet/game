@@ -33,3 +33,11 @@ class Exit(pygame.sprite.Sprite):
         image = pygame.image.load('img/exit.png')
         self.image = pygame.transform.scale(image, (tile_size, int(tile_size * 1.5)))
         self.rect = self.image.get_rect().move(x, y)
+
+class Coin(pygame.sprite.Sprite):
+    def __init__(self, x, y, tile_size):
+        pygame.sprite.Sprite.__init__(self)
+        image = pygame.image.load('img/coin.png')
+        self.image = pygame.transform.scale(image, (tile_size // 2, tile_size // 2))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)

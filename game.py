@@ -6,6 +6,7 @@ from enum import Enum
 from player import Player
 from world import World
 from button import Button
+from util import draw_text
 
 class GameState(Enum):
     GAME_OVER = 0
@@ -27,9 +28,11 @@ class Game:
         self.levels = levels
         self.current_level = 0
 
+        self.score = 0
+
         self.game_state = GameState.START
 
-        self.player = Player(100, self.height - 130, self.on_die, self.next_level)
+        self.player = Player(100, self.height - 130, self.on_die, self.next_level, self.add_to_score)
         self.world = levels[self.current_level].load_world(tile_size)
         self.clock = pygame.time.Clock()
 
@@ -64,7 +67,7 @@ class Game:
             if self.game_state == GameState.PLAYING:
                 self.world.update()
 
-                is_alive = self.player.update(self.world.tile_list, self.world.enemies_list, self.world.exit_list)
+                is_alive = self.player.update(self.world.tile_list, self.world.enemies_list, self.world.exit_list, self.world.coin_list)
                 if not is_alive:
                     self.game_state = GameState.GAME_OVER
 
@@ -73,12 +76,14 @@ class Game:
 
             # Show the restart menu
             elif self.game_state == GameState.GAME_OVER:
+                self.world.draw(self.screen)
+                self.player.draw(self.screen)
+
                 self.player.update_death()
                 self.restart_button.update()
                 self.restart_button.draw(self.screen)
 
-                self.world.draw(self.screen)
-                self.player.draw(self.screen)
+                draw_text(self.screen, f"Score: {self.score}", 0, 0)
 
             elif self.game_state == GameState.START:
                 self.start_button.update()
@@ -100,6 +105,11 @@ class Game:
 
     def reset(self):
         self.game_state = GameState.PLAYING
+        self.score = 0
+
+        self.world = self.levels[self.current_level].load_world(self.tile_size)
+        self.player.reset(100, self.height - 130)
+
         self.player.reset(100, self.height - 130)
     
     def start(self):
@@ -114,6 +124,9 @@ class Game:
         self.current_level += 1
         self.world = self.levels[self.current_level].load_world(self.tile_size)
         self.player.reset(100, self.height - 130)
+
+    def add_to_score(self, amount):
+        self.score += amount
 
     def __del__(self):
         pygame.quit()

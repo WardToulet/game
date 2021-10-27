@@ -2,9 +2,10 @@ import pygame
 from pygame.locals import *
 
 class Player:
-    def __init__(self, x, y, on_die, on_exit):
+    def __init__(self, x, y, on_die, on_exit, on_score):
         self.on_die = on_die
         self.on_exit = on_exit
+        self.on_score = on_score
 
         self.reset(x, y)
 
@@ -29,7 +30,7 @@ class Player:
         self.direction = 0
         self.in_air = False
 
-    def update(self, tile_list, entity_list, exit_list):
+    def update(self, tile_list, entity_list, exit_list, coin_list):
         dx = 0
         dy = 0
         walk_cooldown = 5
@@ -101,6 +102,9 @@ class Player:
 
         if pygame.sprite.spritecollide(self, exit_list, False):
             self.on_exit()
+
+        if pygame.sprite.spritecollide(self, coin_list, True):
+            self.on_score(1)
 
         # update
         self.rect.x += dx
