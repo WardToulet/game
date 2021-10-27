@@ -49,6 +49,7 @@ class World:
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
+            pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
 
 class Player:
     def __init__(self, x, y):
@@ -70,6 +71,8 @@ class Player:
 
         self.rect.x = x
         self.rect.y = y
+        self.width = self.image.get_width
+        self.height = self.image.get_height
         self.vel_y = 0
         self.jumped = False
         self.direction = 0
@@ -125,7 +128,18 @@ class Player:
         dy += self.vel_y
 
         # collsision
-        # TODO: collision
+        for tile in world.tile_list:
+            x_rect = self.rect.move(dx, 0)
+            if tile[1].colliderect(x_rect):
+                dx = 0
+
+            y_rect = self.rect.move(0, dy)
+            if tile[1].colliderect(y_rect):
+                if self.vel_y < 0:
+                    dy = tile[1].bottom - self.rect.top
+                if self.vel_y >= 0:
+                    dy = tile[1].top - self.rect.bottom
+                self.vel_y = 0
 
         # update
         self.rect.x += dx
@@ -137,6 +151,7 @@ class Player:
 
     def draw(self):
         screen.blit(self.image, self.rect)
+        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
 
 
 world_data = [
