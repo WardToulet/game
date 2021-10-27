@@ -1,12 +1,13 @@
 import pygame
 from pygame.locals import *
 
-from entities import Enemy, Lava
+from entities import Enemy, Lava, Exit
 
 class World:
     def __init__(self, data, tile_size):
         self.tile_list = []
-        self.entity_list = pygame.sprite.Group()
+        self.enemies_list = pygame.sprite.Group()
+        self.exit_list = pygame.sprite.Group()
 
         # Load the images
         self.images = list(map(lambda name: pygame.image.load(f"img/{name}.png"), ["dirt", "grass"]))
@@ -21,22 +22,28 @@ class World:
                 ## Blob enemies
                 elif tile == 3:
                     blob = Enemy(x * tile_size, y * tile_size + 15)
-                    self.entity_list.add(blob)
+                    self.enemies_list.add(blob)
+
+                ## Exit
+                elif tile == 8:
+                    self.exit_list.add(Exit(x * tile_size, y * tile_size - (tile_size // 2), tile_size))
 
                 ## Lava entities
                 elif tile == 6:
                     lava = Lava(x * tile_size, (y + 0.5) * tile_size, tile_size)
-                    self.entity_list.add(lava)
+                    self.enemies_list.add(lava)
 
     def update(self):
-        self.entity_list.update()
+        self.enemies_list.update()
+        self.exit_list.update()
 
     def draw(self, screen):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
-            pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
+            # pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
 
-        self.entity_list.draw(screen)
+        self.enemies_list.draw(screen)
+        self.exit_list.draw(screen)
 
     def add_tile(self, kind, x, y, tile_size):
         image = pygame.transform.scale(self.images[kind - 1], (tile_size, tile_size))

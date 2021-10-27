@@ -2,7 +2,10 @@ import pygame
 from pygame.locals import *
 
 class Player:
-    def __init__(self, x, y):
+    def __init__(self, x, y, on_die, on_exit):
+        self.on_die = on_die
+        self.on_exit = on_exit
+
         self.reset(x, y)
 
     def reset(self, x, y):
@@ -26,7 +29,7 @@ class Player:
         self.direction = 0
         self.in_air = False
 
-    def update(self, tile_list, entity_list):
+    def update(self, tile_list, entity_list, exit_list):
         dx = 0
         dy = 0
         walk_cooldown = 5
@@ -94,7 +97,10 @@ class Player:
 
         # enemy collision if collided with an enmy return false
         if pygame.sprite.spritecollide(self, entity_list, False):
-            return False
+            self.on_die()
+
+        if pygame.sprite.spritecollide(self, exit_list, False):
+            self.on_exit()
 
         # update
         self.rect.x += dx
@@ -109,4 +115,4 @@ class Player:
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
+        # pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)

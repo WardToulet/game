@@ -14,18 +14,23 @@ class GameState(Enum):
     EXIT = 3
 
 class Game:
-    def __init__(self, width, height, tile_size, world, fps=60, name="Game"):
+    def __init__(self, width, height, tile_size, levels, fps=60, name="Game"):
         pygame.init()
 
         self.width = width
         self.height = height
 
+        self.tile_size = tile_size
+
         self.fps = fps
+
+        self.levels = levels
+        self.current_level = 0
 
         self.game_state = GameState.START
 
-        self.player = Player(100, self.height - 130)
-        self.world = world
+        self.player = Player(100, self.height - 130, self.on_die, self.next_level)
+        self.world = levels[self.current_level].load_world(tile_size)
         self.clock = pygame.time.Clock()
 
         # FIXME: move to proper location
@@ -59,7 +64,7 @@ class Game:
             if self.game_state == GameState.PLAYING:
                 self.world.update()
 
-                is_alive = self.player.update(self.world.tile_list, self.world.entity_list)
+                is_alive = self.player.update(self.world.tile_list, self.world.enemies_list, self.world.exit_list)
                 if not is_alive:
                     self.game_state = GameState.GAME_OVER
 
@@ -90,6 +95,9 @@ class Game:
             # Update the display
             pygame.display.update()
 
+    def on_die(self):
+        self.game_state = GameState.GAME_OVER
+
     def reset(self):
         self.game_state = GameState.PLAYING
         self.player.reset(100, self.height - 130)
@@ -99,6 +107,13 @@ class Game:
 
     def exit(self):
         self.game_state = GameState.EXIT
+
+    def next_level(self):
+        # TODO: check if the last level has been reached
+
+        self.current_level += 1
+        self.world = self.levels[self.current_level].load_world(self.tile_size)
+        self.player.reset(100, self.height - 130)
 
     def __del__(self):
         pygame.quit()
