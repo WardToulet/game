@@ -1,14 +1,11 @@
 import pygame
 from pygame.locals import *
 
-from pygame import mixer
-
 from enum import Enum
 
 from player import Player
 from world import World
 from button import Button
-from util import draw_text
 
 class GameState(Enum):
     GAME_OVER = 0
@@ -18,8 +15,6 @@ class GameState(Enum):
 
 class Game:
     def __init__(self, width, height, tile_size, levels, fps=60, name="Game"):
-        pygame.mixer.pre_init(44100, -16, 2, 512)
-        mixer.init()
         pygame.init()
 
         self.width = width
@@ -80,14 +75,12 @@ class Game:
 
             # Show the restart menu
             elif self.game_state == GameState.GAME_OVER:
-                self.world.draw(self.screen)
-                self.player.draw(self.screen)
-
                 self.player.update_death()
                 self.restart_button.update()
                 self.restart_button.draw(self.screen)
 
-                draw_text(self.screen, f"Score: {self.score}", 0, 0)
+                self.world.draw(self.screen)
+                self.player.draw(self.screen)
 
             elif self.game_state == GameState.START:
                 self.start_button.update()
@@ -109,11 +102,6 @@ class Game:
 
     def reset(self):
         self.game_state = GameState.PLAYING
-        self.score = 0
-
-        self.world = self.levels[self.current_level].load_world(self.tile_size)
-        self.player.reset(100, self.height - 130)
-
         self.player.reset(100, self.height - 130)
     
     def start(self):
@@ -131,6 +119,7 @@ class Game:
 
     def add_to_score(self, amount):
         self.score += amount
+        print(f"score: {self.score}")
 
     def __del__(self):
         pygame.quit()
